@@ -1,0 +1,7 @@
+---
+title: "От вектора к текстам в R"
+author: "Konstantin Ivanin"
+date: '24 сентября 2017 г '
+output: html_document
+---
+
