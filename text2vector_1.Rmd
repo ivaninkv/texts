@@ -1,0 +1,49 @@
+---
+title: "От вектора к текстам в R"
+author: "Konstantin Ivanin"
+date: '24 сентября 2017 г '
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Работа со строками
+
+Загрузим библиотеки
+```{r, message=FALSE}
+library(stringr)
+library(tidyverse)
+library(tidyr)
+library(readr)
+```
+
+## Чет-нечет
+Напишите функцию `is.odd()`, которая возвращает значение `TRUE`, если число символов в строке нечетно, `FALSE`, если число символов в строке четно.
+
+```{r}
+is.odd <- function(str) {
+  return(nchar(str) %% 2 != 0)
+}
+
+is.odd(c("odd", "even", ""))
+```
+
+## Искусственные данные по средней продолжительности сна
+В данных по продолжительности сна (1.1_sleep_hours.csv) две переменных: код испытуемого и среднее время сна. Попробуйте сделать следующий график:
+
+```{r, message=FALSE}
+sleep.data <- read_csv('data/1.1_sleep_hours.csv')
+sleep.data %>% 
+  separate(code, c('sex', 'year'), sep = '__') %>% 
+  ggplot(aes(sleep_hours, fill = sex)) +
+  geom_density(alpha = 1/3) +
+  ggtitle('Зависимость времени сна от пола') +
+  xlab('среднее время сна') +
+  ylab('плотность')
+```
+
+
+
+
+
+
