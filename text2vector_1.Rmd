@@ -4,7 +4,9 @@ author: "Konstantin Ivanin"
 date: '24 сентября 2017 г '
 output:
   html_document: default
-  pdf_document: default
+  pdf_document:
+    latex_engine: xelatex
+header-includes: \usepackage[T2A]{fontenc} \usepackage[utf8]{inputenc} \usepackage[russian]{babel}
 ---
 
 # Работа со строками
@@ -15,6 +17,8 @@ library(stringr)
 library(tidyverse)
 library(tidyr)
 library(readr)
+library(stringi)
+library(stringr)
 ```
 
 ## Чет-нечет
@@ -42,8 +46,39 @@ sleep.data %>%
   ylab('плотность')
 ```
 
+## Алфавитный порядок
+Как было сказано выше, “алфавитный” порядок разный в разных локалях. Напишите функцию `ordering_in_locales`, которая на вход принимает два символа, а возвращает таблицу с информацией о том, в скольких локалях порядок соответствует поданному в функцию, а в скольких порядок обратный:
+```{r}
+ordering_in_locales <- function(ch1, ch2) {
+  
+}
 
+ordering_in_locales('i', 'и')
+```
 
+## Функция для проверки полиндромности
+Напишите функцию `is.palindrome`, которая будет проверять, является ли слово полиндромом.
+```{r}
+is.palindrome <- function(str) {
+  #return(str == stri_reverse(str))
+  return(str == paste(rev(str_split(str, pattern = '', simplify = T)), collapse = ''))
+}
 
+is.palindrome('топот')
+is.palindrome('топор')
+```
 
+## Функция для зеркального отражения размера букв
+Напишите функцию `mirror_case()`, которая в строке все большие буквы заменяет на маленькие, а все маленькие – на большие.
+```{r}
+mirror_case <- function(str) {
+  str <- str_split(str, pattern = '', simplify = T)
+  up <- grepl('[[:upper:]]', str)
+  low <- grepl('[[:lower:]]', str)
+  str[up] <- str_to_lower(str[up])
+  str[low] <- str_to_upper(str[low])
+  return(paste(str, collapse = ''))
+}
 
+mirror_case('ЖиЛи БыЛи ТрИ мЕдВеДя')
+```
