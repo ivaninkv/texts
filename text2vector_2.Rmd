@@ -1,0 +1,52 @@
+---
+title: "От вектора к текстам в R"
+author: "Konstantin Ivanin"
+date: '25 сентября 2017 г '
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+mainfont: Ubuntu  
+---
+
+# Растояния и другое
+
+Загрузим библиотеки
+```{r, message=FALSE}
+library(stringr)
+library(tidyverse)
+library(tidyr)
+library(readr)
+library(stringi)
+library(stringr)
+```
+
+## Чистка html тегов
+В мире достаточно много готовых решений по чистке html и xml тегов, так что настало время изобрести велосипед. Напишите функцию `tagless()`, которая убирает из строки теги.
+```{r}
+tagless <- function(str) {
+  return(str_replace_all(str, '<[^>]*>', ''))
+}
+
+tagless('<greeting>Hello, world!</greeting>')
+```
+
+## Лишние пробелы
+Напишите функцию `spaceless()`, которая убирает лишние пробелы.
+```{r}
+spaceless <- function(str) {
+  return(str_replace_all(str, '\\s+', ' '))
+}
+
+spaceless(c("two  spaces", "five     spaces"))
+```
+
+
+
+
+
+
+
+
+
+
