@@ -168,6 +168,22 @@ is.palindrome('Замучен он, но не чумаз')</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <pre class="r"><code>is.palindrome('Замучена она, но не чумаза')</code></pre>
 <pre><code>## [1] FALSE</code></pre>
+<p>Скачайте <a href="https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/Perec_palindrome.txt">произведение Жоржа Перека</a>, посчитайте количество символов в нем и проверьте на полиндромность. Мой вариант несколько препарирован, оригинал можно найти <a href="http://cui.unige.ch/isi/cours/javalettres/perec.txt">здесь</a>.</p>
+<pre class="r"><code>perec &lt;- readLines('data/Perec_palindrome.txt')
+perec &lt;- paste(perec, collapse = ' ')
+words &lt;- perec %&gt;% 
+  str_split(' ') 
+paste('Слов', length(words[[1]]))</code></pre>
+<pre><code>## [1] &quot;Слов 1342&quot;</code></pre>
+<pre class="r"><code>is.palindrome(perec)</code></pre>
+<pre><code>## [1] TRUE</code></pre>
+<div id="-" class="section level2">
+<h2>Спеллчекер? Легко!</h2>
+<p>Скачайте <a href="https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/rus_all_forms.csv">словарь форм русского языка</a> (осторожно, большой файл) на основе словаря А. А. Залязняка и сделайте функцию <code>spellcheck()</code>, которая возвращает слова из строки, которых нет в словаре; если аргумент <code>suggestions = TRUE</code>, то возвращает слово с минимальным расстояние Дамерау — Левенштейна.</p>
+<pre class="r"><code>spellcheck &lt;- function(word, suggestions = TRUE) {
+  
+}</code></pre>
+</div>
 </div>
 
 

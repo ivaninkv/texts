@@ -56,6 +56,26 @@ is.palindrome('Замучен он, но не чумаз')
 is.palindrome('Замучена она, но не чумаза')
 ```
 
+Скачайте [произведение Жоржа Перека](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/Perec_palindrome.txt), посчитайте количество символов в нем и проверьте на полиндромность. Мой вариант несколько препарирован, оригинал можно найти [здесь](http://cui.unige.ch/isi/cours/javalettres/perec.txt).
+```{r}
+perec <- readLines('data/Perec_palindrome.txt')
+perec <- paste(perec, collapse = ' ')
+words <- perec %>% 
+  str_split(' ') 
+paste('Слов', length(words[[1]]))
+is.palindrome(perec)
+```
+
+## Спеллчекер? Легко!
+Скачайте [словарь форм русского языка](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/rus_all_forms.csv) (осторожно, большой файл) на основе словаря А. А. Залязняка и сделайте функцию `spellcheck()`, которая возвращает слова из строки, которых нет в словаре; если аргумент `suggestions = TRUE`, то возвращает слово с минимальным расстояние Дамерау — Левенштейна.
+```{r}
+spellcheck <- function(word, suggestions = TRUE) {
+  
+}
+
+
+```
+
 
 
 
