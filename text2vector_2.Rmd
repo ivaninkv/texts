@@ -3,10 +3,10 @@ title: "От вектора к текстам в R"
 author: "Konstantin Ivanin"
 date: '25 сентября 2017 г '
 output:
-  pdf_document: 
-    latex_engine: xelatex
   html_document: default
-mainfont: Ubuntu  
+  pdf_document:
+    latex_engine: xelatex
+mainfont: Ubuntu
 ---
 
 # Растояния и другое
@@ -38,10 +38,23 @@ spaceless <- function(str) {
   return(str_replace_all(str, '\\s+', ' '))
 }
 
-spaceless(c("two  spaces", "five     spaces"))
+spaceless(c('two  spaces', 'five     spaces'))
 ```
 
+# Функция для проверки полиндромности
+Улучшите функцию `is.palindrome()`, чтобы она могла учесть знаки препинания, пробелы и т. п.
+```{r}
+is.palindrome <- function(str) {
+  str %<>%
+    str_to_lower() %>% 
+    str_replace_all('[:punct:]', '') %>% 
+    str_replace_all('\\s+', '')
+  return(str == stri_reverse(str))
+}
 
+is.palindrome('Замучен он, но не чумаз')
+is.palindrome('Замучена она, но не чумаза')
+```
 
 
 
