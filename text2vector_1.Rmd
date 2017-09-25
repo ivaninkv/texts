@@ -6,7 +6,7 @@ output:
   html_document: default
   pdf_document:
     latex_engine: xelatex
-header-includes: \usepackage[T2A]{fontenc} \usepackage[utf8]{inputenc} \usepackage[russian]{babel}
+#mainfont: Ubuntu
 ---
 
 # Работа со строками
@@ -50,7 +50,9 @@ sleep.data %>%
 Как было сказано выше, “алфавитный” порядок разный в разных локалях. Напишите функцию `ordering_in_locales`, которая на вход принимает два символа, а возвращает таблицу с информацией о том, в скольких локалях порядок соответствует поданному в функцию, а в скольких порядок обратный:
 ```{r}
 ordering_in_locales <- function(ch1, ch2) {
-  
+  str <- c(ch1, ch2)
+  loc <- stri_locale_list()
+  return(table(sapply(loc, function(x) {paste(stringr::str_sort(str, locale = x), collapse = '_')})))
 }
 
 ordering_in_locales('i', 'и')
