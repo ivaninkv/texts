@@ -1,6 +1,6 @@
 ---
-title: "От вектора к текстам в R"
-author: "Konstantin Ivanin"
+title: 'От вектора к текстам в R'
+author: 'Konstantin Ivanin'
 date: '25 сентября 2017 г '
 output:
   html_document: default
