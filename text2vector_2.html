@@ -131,7 +131,8 @@ library(tidyverse)
 library(tidyr)
 library(readr)
 library(stringi)
-library(stringr)</code></pre>
+library(stringr)
+library(stringdist)</code></pre>
 <div id="-html-" class="section level2">
 <h2>Чистка html тегов</h2>
 <p>В мире достаточно много готовых решений по чистке html и xml тегов, так что настало время изобрести велосипед. Напишите функцию <code>tagless()</code>, которая убирает из строки теги.</p>
@@ -180,9 +181,27 @@ paste('Слов', length(words[[1]]))</code></pre>
 <div id="-" class="section level2">
 <h2>Спеллчекер? Легко!</h2>
 <p>Скачайте <a href="https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/rus_all_forms.csv">словарь форм русского языка</a> (осторожно, большой файл) на основе словаря А. А. Залязняка и сделайте функцию <code>spellcheck()</code>, которая возвращает слова из строки, которых нет в словаре; если аргумент <code>suggestions = TRUE</code>, то возвращает слово с минимальным расстояние Дамерау — Левенштейна.</p>
-<pre class="r"><code>spellcheck &lt;- function(word, suggestions = TRUE) {
-  
-}</code></pre>
+<pre class="r"><code>v &lt;- read_lines('data/rus_all_forms.csv', skip = 1) %&gt;% str_to_lower()
+spellcheck &lt;- function(words, suggestions = TRUE) {
+  words %&lt;&gt;% 
+    str_to_lower() %&gt;% 
+    str_replace_all('[:punct:]', '') %&gt;% 
+    str_replace_all('\\s+', ' ') %&gt;% 
+    str_split(' ', simplify = TRUE)
+  if (suggestions == TRUE) {
+    to.return &lt;- words[!words %in% v]
+    dist_calc &lt;- function(w) {
+      v[which.min(stringdist(w, v, method = 'dl'))]
+    }
+    return(sapply(to.return, dist_calc, USE.NAMES = FALSE))
+  } else {
+    return(words[!words %in% v])
+  }
+}
+spellcheck('мама мыла раму')</code></pre>
+<pre><code>## [1] &quot;аму&quot;</code></pre>
+<pre class="r"><code>spellcheck('карова')</code></pre>
+<pre><code>## [1] &quot;кадрова&quot;</code></pre>
 </div>
 </div>
 
