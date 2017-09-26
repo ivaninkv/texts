@@ -20,6 +20,7 @@ library(readr)
 library(stringi)
 library(stringr)
 library(stringdist)
+library(magrittr)
 ```
 
 ## Чистка html тегов
@@ -42,7 +43,7 @@ spaceless <- function(str) {
 spaceless(c('two  spaces', 'five     spaces'))
 ```
 
-# Функция для проверки полиндромности
+# Функция для проверки палиндромности
 Улучшите функцию `is.palindrome()`, чтобы она могла учесть знаки препинания, пробелы и т. п.
 ```{r}
 is.palindrome <- function(str) {
@@ -57,7 +58,7 @@ is.palindrome('Замучен он, но не чумаз')
 is.palindrome('Замучена она, но не чумаза')
 ```
 
-Скачайте [произведение Жоржа Перека](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/Perec_palindrome.txt), посчитайте количество символов в нем и проверьте на полиндромность. Мой вариант несколько препарирован, оригинал можно найти [здесь](http://cui.unige.ch/isi/cours/javalettres/perec.txt).
+Скачайте [произведение Жоржа Перека](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/Perec_palindrome.txt), посчитайте количество символов в нем и проверьте на палиндромность. Мой вариант несколько препарирован, оригинал можно найти [здесь](http://cui.unige.ch/isi/cours/javalettres/perec.txt).
 ```{r}
 perec <- readLines('data/Perec_palindrome.txt')
 perec <- paste(perec, collapse = ' ')
@@ -89,12 +90,70 @@ spellcheck <- function(words, suggestions = TRUE) {
 }
 spellcheck('мама мыла раму')
 spellcheck('карова')
-
 ```
 
+## Анализ данных небрежно собраннных анкет
 
+В ходе анализа данных чаще всего бороться со строками и регулярными выражениями приходится в процессе обработки неаккуратно собранных анкет. Предлагаю поразвлекаться [с подобными данными](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/2.4.5_questionary.csv) и построить следующие графики:
+```{r, message=FALSE}
+ankets <- read_tsv('data/2.4.5_questionary.csv')
 
+# первый заход
+ankets %>% 
+  ggplot(aes(age, fill = sex)) +
+  geom_density(alpha = 1/2)
+# поправим данные
+ankets %<>%
+  mutate(sex = if_else(substr(sex, 1, 1) == 'ж' | substr(sex, 1, 1) == 'Ж', 'женский', 'мужской')) %>% 
+  mutate(age = as.integer(gsub('\\D', '', ankets$age)))
+# и попробуем еще раз
+ankets %>% 
+  ggplot(aes(age, fill = sex)) +
+  geom_density(alpha = 1/2) +
+  ggtitle('Распределение респондентов по полу и возрасу')
 
+# ещё один график
+ankets %>% 
+  ggplot(aes(fear_of_the_dark, fill = sex)) +
+  geom_bar(position = position_dodge())
+# опять правим данные
+ankets %<>% 
+  mutate(fear_of_the_dark = if_else(grepl('да|иногда|немного|очень|Определённо|панически', fear_of_the_dark, ignore.case = TRUE), 'Да', 'Нет'))
+# и попробуем еще раз
+ankets %>% 
+  ggplot(aes(fear_of_the_dark, fill = sex)) +
+  geom_bar(position = position_dodge()) +
+  ggtitle('Распределение боящихся темноты по полу') +
+  xlab('страх темноты') +
+  ylab('количество респондентов')
+
+# и ещё один график
+ankets %>% 
+  ggplot(aes(favourite_drink)) +
+  geom_bar()
+# правим данные
+ankets %<>%
+  mutate(favourite_drink = if_else(grepl('Кофе', favourite_drink, ignore.case = TRUE), 'Кофе', favourite_drink)) %>% 
+  mutate(favourite_drink = if_else(grepl('Пиво', favourite_drink, ignore.case = TRUE), 'Пиво', favourite_drink)) %>% 
+  mutate(favourite_drink = if_else(grepl('Сок', favourite_drink, ignore.case = TRUE), 'Сок', favourite_drink)) %>% 
+  mutate(favourite_drink = if_else(grepl('Чай', favourite_drink, ignore.case = TRUE), 'Чай', favourite_drink)) %>% 
+  mutate(favourite_drink = if_else(!favourite_drink %in% c('Кофе', 'Пиво', 'Сок', 'Чай'), 'NA', favourite_drink))
+# строим график
+ankets %>% 
+  ggplot(aes(favourite_drink)) +
+  geom_bar() +
+  ggtitle('Чай, кофе сок или пиво?') +
+  xlab('')
+```
+
+А когда все получится, напишите функцию, которая приведет все телефоны к единому формату: 89143302299.
+```{r}
+phone_format <- function(phone) {
+  return(gsub('^7', '8', gsub('\\D', '', phone)))
+}
+
+phone_format(ankets$phone)
+```
 
 
 
