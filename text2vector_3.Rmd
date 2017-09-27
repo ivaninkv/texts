@@ -16,6 +16,7 @@ mainfont: Ubuntu
 library(tidyverse)
 library(magrittr)
 library(tidytext)
+library(stringr)
 ```
 
 Подготовка
@@ -26,11 +27,158 @@ download.file('https://goo.gl/9DWBF5', destfile = temp) # скачиваем в 
 unzip(temp, exdir = path) # создаем папку Chekhov и распаковываем туда
 rm(temp) # удаляем временный файл
 list.files(path = path) # смотрим на список распокованных файлов
+files <- list.files(path = path) # создадим переменную со списком файлов
+texts <- lapply(paste0(path, files), FUN = readLines) # считаем все файлы в одну переменную
 ```
-
 
 ## Еще немножко о законе Ципфа
 У функции `unnest_tokens()` есть аргумент `token`, значение которого по умолчанию `'words'`. Попробуйте использовать значение `'characters'` и определить будет ли соблюдаться закон Ципфа для отдельных символов.
+
+Введение в `tidytext`. Тайдифицируем рассказы Чехова:
+```{r}
+texts <- lapply(seq_along(texts), function(x) {
+  data_frame(title = files[[x]],
+  sentences = seq_along(texts[[x]]),
+  text = texts[[x]])
+})
+
+all_texts <- Reduce(function(x, y) {merge(x, y, all = TRUE)}, texts)
+# http://adv-r.had.co.nz/Functionals.html - почитать про Reduce
+
+all_texts %>%
+  unnest_tokens(char, text, token = 'characters') -> tidy_chekhov
+head(tidy_chekhov)
+```
+
+Построим график:
+```{r}
+tidy_chekhov %>%
+  group_by(char) %>%
+  summarise(term_frequency = n() / nrow(tidy_chekhov)) %>%
+  arrange(desc(term_frequency)) %>%
+  mutate(rank = row_number()) -> zipf
+head(zipf)
+  
+zipf %>%
+  ggplot(aes(rank, term_frequency)) +
+  geom_line() +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(title = 'Иллюстрация закона Хердана-Хипса на примере рассказов Чехова',
+  y = 'log(term frequency)',
+  x = 'log(rank)') +
+  theme_bw()
+```
+
+## Фамильная честь Вустеров
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+rm(list = ls())
+gc()
+```
+
+Возможно, это прозвучит скучно, но давайте повторим все, что мы прошли, используя роман П. Г. Вудхауза “Фамильная честь Вустеров”.
+
+* скачайте [текст романа](https://goo.gl/rgatpY)
+* создайте переменную, отвечающую за номер главы (название давайте включим в первую главу).
+* tidyфицируйте текст (занудства ради я бы попросил создать переменную с номером строки: `row_number()`)
+* В какой главе живет самая частотная униграмма?
+* Уберите стоп-слова. В какой главе теперь живет самая частотная униграмма?
+* Посчитайте TfIdf (исключив стоп-слова). В какой главе живет слово с самым высоким значением TfIdf?
+* Посчитайте TfIdf (исключив стоп-слова) для биграмного представления текста.
+* Постройте график зависимостти абсолютной частоты и меры TfIdf. Назовите, какие четыре биграммы выглядят выбросами на графике.
+* Напишите функцию `text_generater()`, которая будет генерировать текст заданной наперед длины на основе частотной биграммной модели, построенной на основе входного текста.
+
+Подготовка
+```{r, message=FALSE, warning=FALSE}
+text <- readLines('data/3.9.2 Wodehouse.txt')
+text %<>% paste(collapse = ' ') %>% 
+  str_split('ГЛАВА \\d+', simplify = T)
+text <- text[1, ]
+text[2] <- paste(text[1], text[2])
+text <- text[2:15]
+
+df <- tibble(chapter = paste('Глава', seq_along(text), sep = '_'), text = text[seq_along(text)])
+df %<>% 
+  mutate(text = str_replace_all(text, '\\s+', ' '))
+
+sw <- read_csv('https://goo.gl/pfpUrB', col_names = FALSE)$X1
+```
+
+tidyфицируем текст
+```{r}
+tidy.text <- df %>% 
+  unnest_tokens(text, text)
+```
+
+Самая частотная униграмма
+```{r}
+tidy.text %>% 
+  count(chapter, text, sort = T) %>% 
+  head(1)
+```
+
+Самая частотная униграмма без стоп слов
+```{r}
+tidy.text %>% 
+  filter(!text %in% sw) %>% 
+  count(chapter, text, sort = T) %>% 
+  head(1)
+```
+
+tfidf для униграмм
+```{r}
+tfidf.text <- tidy.text %>% 
+  filter(!text %in% sw) %>% 
+  count(chapter, text) %>% 
+  arrange(desc(n)) %>% 
+  bind_tf_idf(chapter, text, n)
+
+tfidf.text %>% 
+  filter(tf_idf == max(tf_idf))
+```
+
+tfidf для биграмм
+```{r}
+tidy.bigram <- df %>%
+  unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>% 
+  separate(bigram, c('word1', 'word2'), sep = ' ') %>% 
+  filter(!word1 %in% sw) %>%
+  filter(!word2 %in% sw) %>% 
+  count(chapter, word1, word2, sort = TRUE) %>% 
+  unite(bigram, word1, word2, sep = ' ') 
+
+tfidf.bigram <- tidy.bigram %>% 
+  bind_tf_idf(bigram, chapter, n) %>%
+  arrange(desc(tf_idf))
+
+tfidf.bigram %>% 
+  filter(tf_idf == max(tf_idf))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
