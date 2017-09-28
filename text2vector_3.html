@@ -327,12 +327,64 @@ tfidf.bigram %&gt;%
 ## 3  Глава_9 мистер вустер    11 0.011815252 1.0296194 0.012165213
 ## 4  Глава_2  тотли тауэрс    10 0.008467401 0.3364722 0.002849045</code></pre>
 <p>Функция <code>text_generater()</code></p>
-<pre class="r"><code>text_generater &lt;- function(first_word, text, text_length = 10) {
+<pre class="r"><code>text_generater &lt;- function(first_word, text, text_length = 10, remove_sw = TRUE) {
+  if (remove_sw == TRUE) {
+    sw &lt;- read_csv('https://goo.gl/pfpUrB', col_names = FALSE)$X1
+  }
   
+  df &lt;- tibble(text = text)
+  
+  if (remove_sw == TRUE) {
+      tidy.text &lt;- df %&gt;% 
+        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %&gt;%
+        separate(bigram, c('word1', 'word2'), sep = ' ') %&gt;% 
+        filter(!word1 %in% sw) %&gt;%
+        filter(!word2 %in% sw) %&gt;%
+        filter(!grepl(pattern = '\\d+', word1)) %&gt;% 
+        filter(!grepl(pattern = '\\d+', word2)) %&gt;% 
+        count(word1, word2, sort = TRUE) %&gt;% 
+        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
+  } else {
+      tidy.text &lt;- df %&gt;% 
+        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %&gt;%
+        separate(bigram, c('word1', 'word2'), sep = ' ') %&gt;% 
+        filter(!grepl(pattern = '\\d+', word1)) %&gt;% 
+        filter(!grepl(pattern = '\\d+', word2)) %&gt;% 
+        count(word1, word2, sort = TRUE) %&gt;% 
+        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
+  }
+  
+  sub_funct &lt;- function(word) {
+    tidy.text %&gt;% 
+      filter(word1 == word) %&gt;% 
+      select(bigram, word2) %&gt;% 
+      head(1)
+  }
+  
+  res &lt;- c()
+  next.word &lt;- first_word
+  
+  for (i in 1:(text_length - 1)) {
+    sf &lt;- sub_funct(next.word)
+    if (i == 1) {
+      res &lt;- c(res, sf$bigram)
+    } else {
+      res &lt;- c(res, sf$word2)
+    }
+    next.word &lt;- sf$word2
+  }
+  
+  return(paste(res, collapse = ' '))
+  #return(tidy.text)
 }
 
+text &lt;- readLines('data/3.9.2 Wodehouse.txt')
 text_generater(first_word = 'честь', text = text, text_length = 10)</code></pre>
-<pre><code>## NULL</code></pre>
+<pre><code>## [1] &quot;честь вустеров величайшему испытанию какое впечатление произвел желанного действия всестороннему&quot;</code></pre>
+<pre class="r"><code>text &lt;- read_lines('data/book1_.txt')
+text &lt;- c(text, read_lines('data/book2_.txt'))
+text_generater(first_word = 'князь', text = text, text_length = 20, remove_sw = T)</code></pre>
+<pre><code>## [1] &quot;князь андрей вышел вперед видимо желая выразить словами марья дмитриевна какое прекрасное царствование императора александра i приказывает арестовать сержанта&quot;</code></pre>
 </div>
 </div>
 

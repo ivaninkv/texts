@@ -170,12 +170,64 @@ tfidf.bigram %>%
 ```
 
 Функция `text_generater()`
-```{r}
-text_generater <- function(first_word, text, text_length = 10) {
+```{r, message=FALSE}
+text_generater <- function(first_word, text, text_length = 10, remove_sw = TRUE) {
+  if (remove_sw == TRUE) {
+    sw <- read_csv('https://goo.gl/pfpUrB', col_names = FALSE)$X1
+  }
   
+  df <- tibble(text = text)
+  
+  if (remove_sw == TRUE) {
+      tidy.text <- df %>% 
+        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
+        separate(bigram, c('word1', 'word2'), sep = ' ') %>% 
+        filter(!word1 %in% sw) %>%
+        filter(!word2 %in% sw) %>%
+        filter(!grepl(pattern = '\\d+', word1)) %>% 
+        filter(!grepl(pattern = '\\d+', word2)) %>% 
+        count(word1, word2, sort = TRUE) %>% 
+        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
+  } else {
+      tidy.text <- df %>% 
+        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
+        separate(bigram, c('word1', 'word2'), sep = ' ') %>% 
+        filter(!grepl(pattern = '\\d+', word1)) %>% 
+        filter(!grepl(pattern = '\\d+', word2)) %>% 
+        count(word1, word2, sort = TRUE) %>% 
+        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
+  }
+  
+  sub_funct <- function(word) {
+    tidy.text %>% 
+      filter(word1 == word) %>% 
+      select(bigram, word2) %>% 
+      head(1)
+  }
+  
+  res <- c()
+  next.word <- first_word
+  
+  for (i in 1:(text_length - 1)) {
+    sf <- sub_funct(next.word)
+    if (i == 1) {
+      res <- c(res, sf$bigram)
+    } else {
+      res <- c(res, sf$word2)
+    }
+    next.word <- sf$word2
+  }
+  
+  return(paste(res, collapse = ' '))
+  #return(tidy.text)
 }
 
+text <- readLines('data/3.9.2 Wodehouse.txt')
 text_generater(first_word = 'честь', text = text, text_length = 10)
+
+text <- read_lines('data/book1_.txt')
+text <- c(text, read_lines('data/book2_.txt'))
+text_generater(first_word = 'князь', text = text, text_length = 20, remove_sw = T)
 ```
 
 
