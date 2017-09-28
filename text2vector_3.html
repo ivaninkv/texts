@@ -126,7 +126,8 @@ $(document).ready(function () {
 <div class="section level1">
 <h1>Частотность</h1>
 <p>Загрузим библиотеки</p>
-<pre class="r"><code>library(tidyverse)
+<pre class="r"><code>library(data.table)
+library(tidyverse)
 library(magrittr)
 library(tidytext)
 library(stringr)</code></pre>
@@ -334,31 +335,32 @@ tfidf.bigram %&gt;%
   
   df &lt;- tibble(text = text)
   
-  if (remove_sw == TRUE) {
-      tidy.text &lt;- df %&gt;% 
-        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %&gt;%
-        separate(bigram, c('word1', 'word2'), sep = ' ') %&gt;% 
-        filter(!word1 %in% sw) %&gt;%
-        filter(!word2 %in% sw) %&gt;%
-        filter(!grepl(pattern = '\\d+', word1)) %&gt;% 
-        filter(!grepl(pattern = '\\d+', word2)) %&gt;% 
-        count(word1, word2, sort = TRUE) %&gt;% 
-        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
-  } else {
-      tidy.text &lt;- df %&gt;% 
-        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %&gt;%
-        separate(bigram, c('word1', 'word2'), sep = ' ') %&gt;% 
-        filter(!grepl(pattern = '\\d+', word1)) %&gt;% 
-        filter(!grepl(pattern = '\\d+', word2)) %&gt;% 
-        count(word1, word2, sort = TRUE) %&gt;% 
-        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
-  }
+  tidy.text &lt;- df %&gt;%
+    unnest_tokens(bigram, text, token = 'ngrams', n = 2) %&gt;%
+    separate(bigram, c('word1', 'word2'), sep = ' ') %&gt;%
+    {if(remove_sw) filter(., !word1 %in% sw) else .} %&gt;% 
+    {if(remove_sw) filter(., !word2 %in% sw) else .} %&gt;% 
+    filter(!grepl(pattern = '\\d+', word1)) %&gt;%
+    filter(!grepl(pattern = '\\d+', word2)) %&gt;%
+    count(word1, word2, sort = TRUE) %&gt;%
+    unite(bigram, word1, word2, sep = ' ', remove = FALSE) %&gt;% 
+    mutate(rowno = row_number(), used = FALSE)
   
   sub_funct &lt;- function(word) {
-    tidy.text %&gt;% 
-      filter(word1 == word) %&gt;% 
-      select(bigram, word2) %&gt;% 
+    res.df &lt;- tidy.text %&gt;% 
+      filter(word1 == word, used == FALSE) %&gt;% 
+      select(bigram, word2, rowno) %&gt;% 
       head(1)
+    if (nrow(res.df) == 0) {
+      res.df &lt;- tidy.text %&gt;% 
+        filter(word1 == word) %&gt;% 
+        select(bigram, word2, rowno) %&gt;% 
+        head(1)
+    }
+    setDT(tidy.text)
+    tidy.text[rowno == res.df$rowno, used := TRUE]
+    
+    return(res.df %&gt;% select(bigram, word2))
   }
   
   res &lt;- c()
@@ -383,8 +385,8 @@ text_generater(first_word = 'честь', text = text, text_length = 10)</code><
 <pre><code>## [1] &quot;честь вустеров величайшему испытанию какое впечатление произвел желанного действия всестороннему&quot;</code></pre>
 <pre class="r"><code>text &lt;- read_lines('data/book1_.txt')
 text &lt;- c(text, read_lines('data/book2_.txt'))
-text_generater(first_word = 'князь', text = text, text_length = 20, remove_sw = T)</code></pre>
-<pre><code>## [1] &quot;князь андрей вышел вперед видимо желая выразить словами марья дмитриевна какое прекрасное царствование императора александра i приказывает арестовать сержанта&quot;</code></pre>
+text_generater(first_word = 'наташа', text = text, text_length = 20, remove_sw = T)</code></pre>
+<pre><code>## [1] &quot;наташа сидела подле графини безуховой анатоль курагин спросил пьер чувствовал необходимость возражать пьеру казалось князю андрею казалось зависело казалось необходимо&quot;</code></pre>
 </div>
 </div>
 

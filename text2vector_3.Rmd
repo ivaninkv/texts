@@ -13,6 +13,7 @@ mainfont: Ubuntu
 
 Загрузим библиотеки
 ```{r, message=FALSE}
+library(data.table)
 library(tidyverse)
 library(magrittr)
 library(tidytext)
@@ -178,31 +179,32 @@ text_generater <- function(first_word, text, text_length = 10, remove_sw = TRUE)
   
   df <- tibble(text = text)
   
-  if (remove_sw == TRUE) {
-      tidy.text <- df %>% 
-        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
-        separate(bigram, c('word1', 'word2'), sep = ' ') %>% 
-        filter(!word1 %in% sw) %>%
-        filter(!word2 %in% sw) %>%
-        filter(!grepl(pattern = '\\d+', word1)) %>% 
-        filter(!grepl(pattern = '\\d+', word2)) %>% 
-        count(word1, word2, sort = TRUE) %>% 
-        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
-  } else {
-      tidy.text <- df %>% 
-        unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
-        separate(bigram, c('word1', 'word2'), sep = ' ') %>% 
-        filter(!grepl(pattern = '\\d+', word1)) %>% 
-        filter(!grepl(pattern = '\\d+', word2)) %>% 
-        count(word1, word2, sort = TRUE) %>% 
-        unite(bigram, word1, word2, sep = ' ', remove = FALSE)
-  }
+  tidy.text <- df %>%
+    unnest_tokens(bigram, text, token = 'ngrams', n = 2) %>%
+    separate(bigram, c('word1', 'word2'), sep = ' ') %>%
+    {if(remove_sw) filter(., !word1 %in% sw) else .} %>% 
+    {if(remove_sw) filter(., !word2 %in% sw) else .} %>% 
+    filter(!grepl(pattern = '\\d+', word1)) %>%
+    filter(!grepl(pattern = '\\d+', word2)) %>%
+    count(word1, word2, sort = TRUE) %>%
+    unite(bigram, word1, word2, sep = ' ', remove = FALSE) %>% 
+    mutate(rowno = row_number(), used = FALSE)
   
   sub_funct <- function(word) {
-    tidy.text %>% 
-      filter(word1 == word) %>% 
-      select(bigram, word2) %>% 
+    res.df <- tidy.text %>% 
+      filter(word1 == word, used == FALSE) %>% 
+      select(bigram, word2, rowno) %>% 
       head(1)
+    if (nrow(res.df) == 0) {
+      res.df <- tidy.text %>% 
+        filter(word1 == word) %>% 
+        select(bigram, word2, rowno) %>% 
+        head(1)
+    }
+    setDT(tidy.text)
+    tidy.text[rowno == res.df$rowno, used := TRUE]
+    
+    return(res.df %>% select(bigram, word2))
   }
   
   res <- c()
@@ -227,7 +229,7 @@ text_generater(first_word = 'честь', text = text, text_length = 10)
 
 text <- read_lines('data/book1_.txt')
 text <- c(text, read_lines('data/book2_.txt'))
-text_generater(first_word = 'князь', text = text, text_length = 20, remove_sw = T)
+text_generater(first_word = 'наташа', text = text, text_length = 20, remove_sw = T)
 ```
 
 
