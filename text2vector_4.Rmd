@@ -1,0 +1,111 @@
+---
+title: 'От вектора к текстам в R'
+author: 'Konstantin Ivanin'
+date: '30 сентября 2017 г '
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+mainfont: Ubuntu
+---
+
+# Краулер
+
+Загрузим библиотеки
+```{r, message=FALSE}
+library(tidyverse)
+library(magrittr)
+library(tidytext)
+library(stringr)
+library(rvest)
+```
+
+## Нобелевские лауреаты
+Скачайте [список](https://en.wikipedia.org/wiki/Category:Nobel_laureates_in_Literature) нобелевских лауреатов по литературе.
+
+Подготовим тиббл
+```{r}
+wiki.source <- read_html('https://en.wikipedia.org/wiki/Category:Nobel_laureates_in_Literature')
+links <- wiki.source %>% 
+  html_nodes('.mw-category-group > ul > li') %>% 
+  str_extract_all('"(.*?)"', simplify = T) %>% 
+  as.tibble()
+  
+colnames(links) <- c('Link', 'Name')
+links %<>% 
+  slice(2:n()) %>% 
+  mutate(Link = str_replace_all(Link, '\n|"', ''),
+         Name = str_replace_all(Name, '\n|"', '')) %>% 
+  mutate(Link = paste0('https://en.wikipedia.org', Link)) %>% 
+  select(Name, Link) 
+head(links)
+```
+
+Скачаем тексты статей
+```{r}
+links$Text <- ''
+
+for (i in 1:nrow(links)) {
+  if (links$Text[i] == '') {
+    links$Text[i] <- read_html(links$Link[i]) %>% 
+      html_nodes('.mw-parser-output') %>% 
+      html_text()
+    
+    #Sys.sleep(3)  
+  }
+  #print(paste(i, 'of', nrow(links)))
+}
+
+links %<>% 
+  mutate(Text = str_replace_all(Text, '\n', ' '))
+readr::write_rds(links, 'data/nobel.rds', 'gz')
+```
+
+Загрузим данные и обработаем
+```{r}
+links <- readr::read_rds('data/nobel.rds')
+
+tidy.text <- links %>% 
+  unnest_tokens(Word, Text)
+
+tidy.text %>% 
+  count(Word, sort = TRUE) %>% 
+  head()
+
+data('stop_words')
+
+tidy.text %>% 
+  filter(!Word %in% c(stop_words$word, 'retrieved', 'edit')) %>% 
+  count(Word, sort = TRUE) %>% 
+  head()
+```
+
+Порисуем графики
+```{r}
+tidy.text %>% 
+  filter(!Word %in% c(stop_words$word, 'retrieved', 'edit')) %>% 
+  count(Word, sort = TRUE) %>% 
+  mutate(Word = reorder(Word, n)) %>%
+  filter(n > 700) %>% 
+  ggplot(aes(Word, n)) +
+    coord_flip() +
+    geom_bar(stat = 'identity') +
+    theme_bw()
+
+tidy.text %>% 
+  filter(!Word %in% c(stop_words$word, 'retrieved', 'edit')) %>% 
+  filter(Name %in% c('Bob Dylan', 'Ernest Hemingway')) %>% 
+  count(Name, Word, sort = TRUE) %>% 
+  filter(n > 50) %>% 
+  mutate(Word = reorder(Word, n)) %>%
+  ggplot(aes(Word, n, fill = Name)) +
+    coord_flip() +
+    geom_bar(stat = 'identity') +
+    facet_wrap(~Name, scale = 'free') +
+    theme_bw()
+
+```
+
+
+
+
