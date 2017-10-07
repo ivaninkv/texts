@@ -12,6 +12,7 @@ mainfont: Ubuntu
 # Краулер
 
 Загрузим библиотеки
+
 ```{r, message=FALSE}
 library(tidyverse)
 library(magrittr)
@@ -24,6 +25,7 @@ library(rvest)
 Скачайте [список](https://en.wikipedia.org/wiki/Category:Nobel_laureates_in_Literature) нобелевских лауреатов по литературе.
 
 Подготовим тиббл
+
 ```{r}
 wiki.source <- read_html('https://en.wikipedia.org/wiki/Category:Nobel_laureates_in_Literature')
 links <- wiki.source %>% 
@@ -42,6 +44,7 @@ head(links)
 ```
 
 Скачаем тексты статей
+
 ```{r}
 links$Text <- ''
 
@@ -62,6 +65,7 @@ readr::write_rds(links, 'data/nobel.rds', 'gz')
 ```
 
 Загрузим данные и обработаем
+
 ```{r}
 links <- readr::read_rds('data/nobel.rds')
 
@@ -81,6 +85,7 @@ tidy.text %>%
 ```
 
 Порисуем графики
+
 ```{r}
 tidy.text %>% 
   filter(!Word %in% c(stop_words$word, 'retrieved', 'edit')) %>% 

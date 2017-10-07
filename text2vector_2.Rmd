@@ -12,6 +12,7 @@ mainfont: Ubuntu
 # Растояния и другое
 
 Загрузим библиотеки
+
 ```{r, message=FALSE}
 library(stringr)
 library(tidyverse)
@@ -25,6 +26,7 @@ library(magrittr)
 
 ## Чистка html тегов
 В мире достаточно много готовых решений по чистке html и xml тегов, так что настало время изобрести велосипед. Напишите функцию `tagless()`, которая убирает из строки теги.
+
 ```{r}
 tagless <- function(str) {
   return(str_replace_all(str, '<[^>]*>', ''))
@@ -35,6 +37,7 @@ tagless('<greeting>Hello, world!</greeting>')
 
 ## Лишние пробелы
 Напишите функцию `spaceless()`, которая убирает лишние пробелы.
+
 ```{r}
 spaceless <- function(str) {
   return(str_replace_all(str, '\\s+', ' '))
@@ -45,6 +48,7 @@ spaceless(c('two  spaces', 'five     spaces'))
 
 # Функция для проверки палиндромности
 Улучшите функцию `is.palindrome()`, чтобы она могла учесть знаки препинания, пробелы и т. п.
+
 ```{r}
 is.palindrome <- function(str) {
   str %<>%
@@ -59,6 +63,7 @@ is.palindrome('Замучена она, но не чумаза')
 ```
 
 Скачайте [произведение Жоржа Перека](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/Perec_palindrome.txt), посчитайте количество символов в нем и проверьте на палиндромность. Мой вариант несколько препарирован, оригинал можно найти [здесь](http://cui.unige.ch/isi/cours/javalettres/perec.txt).
+
 ```{r}
 perec <- readLines('data/Perec_palindrome.txt')
 perec <- paste(perec, collapse = ' ')
@@ -70,6 +75,7 @@ is.palindrome(perec)
 
 ## Спеллчекер? Легко!
 Скачайте [словарь форм русского языка](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/rus_all_forms.csv) (осторожно, большой файл) на основе словаря А. А. Залязняка и сделайте функцию `spellcheck()`, которая возвращает слова из строки, которых нет в словаре; если аргумент `suggestions = TRUE`, то возвращает слово с минимальным расстояние Дамерау — Левенштейна.
+
 ```{r}
 v <- read_lines('data/rus_all_forms.csv', skip = 1) %>% str_to_lower()
 spellcheck <- function(words, suggestions = TRUE) {
@@ -95,6 +101,7 @@ spellcheck('карова')
 ## Анализ данных небрежно собраннных анкет
 
 В ходе анализа данных чаще всего бороться со строками и регулярными выражениями приходится в процессе обработки неаккуратно собранных анкет. Предлагаю поразвлекаться [с подобными данными](https://raw.githubusercontent.com/agricolamz/2017_ANDAN_course/master/docs/materials/2.4.5_questionary.csv) и построить следующие графики:
+
 ```{r, message=FALSE}
 ankets <- read_tsv('data/2.4.5_questionary.csv')
 
@@ -147,6 +154,7 @@ ankets %>%
 ```
 
 А когда все получится, напишите функцию, которая приведет все телефоны к единому формату: 89143302299.
+
 ```{r}
 phone_format <- function(phone) {
   return(gsub('^7', '8', gsub('\\D', '', phone)))
